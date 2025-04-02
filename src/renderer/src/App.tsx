@@ -1,5 +1,6 @@
 import Key from './components/Key'
-import { useState, useEffect } from 'react'
+import { useCallback, useState, useEffect } from 'react'
+import throttle from 'lodash/throttle'
 
 declare global {
   interface Window {
@@ -14,12 +15,19 @@ declare global {
 function App(): JSX.Element {
   const [pressedKeys, setPressedKeys] = useState<string[]>([])
 
+  const updatePressedKeys = useCallback(
+    throttle((data: string[]) => {
+      setPressedKeys([...data])
+    }, 100),
+    []
+  )
+
   useEffect(() => {
     // Subscribe to global key pressed events
     window.electronAPI.onGlobalKeyPressed((_event, data) => {
       setPressedKeys([...data])
     })
-  })
+  }, [updatePressedKeys])
 
   const config = {
     grid_cols: 8,

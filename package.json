@@ -25,6 +25,7 @@
     "@electron-toolkit/utils": "^4.0.0",
     "@tailwindcss/postcss": "^4.1.0",
     "electron-updater": "^6.3.9",
+    "lodash": "^4.17.21",
     "node-global-key-listener": "^0.3.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.0"
@@ -33,6 +34,7 @@
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@types/lodash": "^4.17.16",
     "@types/node": "^22.13.13",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",

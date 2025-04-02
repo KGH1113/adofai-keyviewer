@@ -1,3 +1,5 @@
+import React from 'react'
+
 interface Props {
   name: string
   pressed: boolean
@@ -8,7 +10,7 @@ interface Props {
   height: number
 }
 
-function Key({
+const Key = React.memo(function Key({
   name,
   pressed,
   padding,
@@ -32,6 +34,6 @@ function Key({
       {name}
     </div>
   )
-}
+})
 
 export default Key

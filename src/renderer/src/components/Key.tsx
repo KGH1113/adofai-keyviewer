@@ -28,7 +28,12 @@ const Key = React.memo(function Key({
         background: pressed ? accentColor : 'transparent',
         borderRadius,
         width,
-        height
+        height,
+        fontSize: '1.3rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 'bold'
       }}
     >
       {name}

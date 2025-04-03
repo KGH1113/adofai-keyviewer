@@ -12,7 +12,8 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('electronAPI', {
-      onGlobalKeyPressed: (callback) => ipcRenderer.on('global-key-pressed', callback)
+      onGlobalKeyPressed: (callback) => ipcRenderer.on('global-key-pressed', callback),
+      onConfigFileRead: (callback) => ipcRenderer.on('config-file-read', callback)
     })
   } catch (error) {
     console.error(error)

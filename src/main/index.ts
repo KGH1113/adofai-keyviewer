@@ -13,6 +13,7 @@ interface KeyViewerConfig {
   }
   grid_cols: number
   grid_rows: number
+  tile_spawn_area_height: number
   padding_of_key: number
   space_between_keys: number
   accent_color: string
@@ -45,6 +46,7 @@ function loadConfig(): KeyViewerConfig {
       },
       grid_cols: 2,
       grid_rows: 1,
+      tile_spawn_area_height: 300,
       padding_of_key: 20,
       space_between_keys: 10,
       accent_color: 'oklch(.667 .295 322.15)',
@@ -94,6 +96,7 @@ function createWindow(): void {
   mainWindow.setFullScreenable(false)
 
   mainWindow.on('ready-to-show', () => {
+    mainWindow.webContents.send('config-file-read', keyViewerConfig)
     mainWindow.show()
   })
 
@@ -114,7 +117,6 @@ function createWindow(): void {
       const pressedKeysCopy = [...pressedKeys]
       pressedKeysCopy.push(e.name)
       pressedKeys = [...pressedKeysCopy]
-      console.log(pressedKeys)
       mainWindow.webContents.send('global-key-pressed', pressedKeys)
     } else if (e.state === 'UP' && pressedKeys.includes(e.name)) {
       const pressedKeysCopy = [...pressedKeys]
@@ -123,7 +125,6 @@ function createWindow(): void {
         pressedKeysCopy.splice(idx, 1)
       }
       pressedKeys = [...pressedKeysCopy]
-      console.log(pressedKeys)
       mainWindow.webContents.send('global-key-pressed', pressedKeys)
     }
   })

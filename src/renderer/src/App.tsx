@@ -1,6 +1,7 @@
 import Key from './components/Key'
 import { useCallback, useState, useEffect } from 'react'
 import throttle from 'lodash/throttle'
+import CanvasRectangleSpawner from './components/CanvasRectangleSpawner'
 
 declare global {
   interface Window {
@@ -137,26 +138,63 @@ function App(): JSX.Element {
   }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${config.grid_cols}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${config.grid_rows}, minmax(0, 1fr))`,
-        gap: config.space_between_keys
-      }}
-    >
-      {config.keys_to_track.map((data, i) => (
-        <Key
-          key={i}
-          name={data.label}
-          pressed={pressedKeys.includes(data.key_name)}
-          padding={config.padding_of_key}
-          accentColor={config.accent_color}
-          borderRadius={config.border_radius_of_key}
-          width={data.width}
-          height={data.height}
-        />
-      ))}
+    <div className="h-[300px] w-full">
+      <div className="relative">
+        {[...Array(config.grid_rows)]
+          .map((_, i) => i)
+          .map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${config.grid_cols}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(1, minmax(0, 1fr))`,
+                gap: config.space_between_keys,
+                zIndex: rowIndex * 10,
+                position: 'absolute',
+                inset: 0
+              }}
+            >
+              {config.keys_to_track
+                .slice(config.grid_cols * row, config.grid_cols * (row + 1))
+                .map((data, colIndex) => (
+                  <CanvasRectangleSpawner
+                    key={colIndex}
+                    pressedKeys={pressedKeys}
+                    triggerKey={data.key_name}
+                    width={data.width}
+                    height={400}
+                    rectWidth={50 - row * 7}
+                    rectColor={['#fff', config.accent_color][(row + 1) % 2]}
+                  />
+                ))}
+            </div>
+          ))}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${config.grid_cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${config.grid_rows}, minmax(0, 1fr))`,
+          gap: config.space_between_keys,
+          position: 'absolute',
+          bottom: 0,
+          width: '100%'
+        }}
+      >
+        {config.keys_to_track.map((data, i) => (
+          <Key
+            key={i}
+            name={data.label}
+            pressed={pressedKeys.includes(data.key_name)}
+            padding={config.padding_of_key}
+            accentColor={config.accent_color}
+            borderRadius={config.border_radius_of_key}
+            width={data.width}
+            height={data.height}
+          />
+        ))}
+      </div>
     </div>
   )
 }

@@ -13,7 +13,8 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('electronAPI', {
       onGlobalKeyPressed: (callback) => ipcRenderer.on('global-key-pressed', callback),
-      onConfigFileRead: (callback) => ipcRenderer.on('config-file-read', callback)
+      onConfigFileRead: (callback) => ipcRenderer.on('config-file-read', callback),
+      openConfigSelectionDialog: () => ipcRenderer.send('open-config-selction-dialog')
     })
   } catch (error) {
     console.error(error)

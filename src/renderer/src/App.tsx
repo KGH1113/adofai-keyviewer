@@ -1,14 +1,11 @@
 import Key from './components/Key'
-import { useCallback, useState, useEffect } from 'react'
-import throttle from 'lodash/throttle'
+import { useState, useEffect } from 'react'
 import CanvasRectangleSpawner from './components/CanvasRectangleSpawner'
 
 interface KeyViewerConfig {
   window: {
     width: number
     height: number
-    transparent: boolean
-    show_frame: boolean
   }
   grid_cols: number
   grid_rows: number
@@ -34,6 +31,7 @@ declare global {
       onConfigFileRead: (
         callback: (_event: Electron.IpcRendererEvent, data: KeyViewerConfig) => void
       ) => void
+      openConfigSelectionDialog: () => void
     }
   }
 }
@@ -43,9 +41,7 @@ function App(): JSX.Element {
   const [config, setConfig] = useState<KeyViewerConfig>({
     window: {
       width: 900,
-      height: 670,
-      transparent: false,
-      show_frame: false
+      height: 670
     },
     grid_cols: 2,
     grid_rows: 1,
@@ -70,27 +66,18 @@ function App(): JSX.Element {
     ]
   })
 
-  const updatePressedKeys = useCallback(
-    () =>
-      throttle((data: string[]) => {
-        setPressedKeys([...data])
-      }, 100),
-    []
-  )
-
   useEffect(() => {
     // Subscribe to global key pressed events
     window.electronAPI.onGlobalKeyPressed((_event, data) => {
       setPressedKeys([...data])
     })
-  }, [updatePressedKeys])
 
-  useEffect(() => {
     window.electronAPI.onConfigFileRead((_event, data) => {
-      console.log(data)
       setConfig(data)
     })
-  })
+
+    window.electronAPI.openConfigSelectionDialog()
+  }, [])
 
   return (
     <div className="h-[300px] w-full">

@@ -24,8 +24,8 @@ const Key = React.memo(function Key({
       style={{
         padding,
         color: accentColor,
-        border: `2px solid ${accentColor}`,
-        background: pressed ? accentColor : 'transparent',
+        border: `2px solid ${pressed ? '#fff' : accentColor}`,
+        background: pressed ? '#fff' : 'transparent',
         borderRadius,
         width,
         height,

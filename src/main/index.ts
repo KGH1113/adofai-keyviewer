@@ -1,15 +1,14 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { GlobalKeyboardListener } from 'node-global-key-listener'
+import * as fs from 'fs'
 
 interface KeyViewerConfig {
   window: {
     width: number
     height: number
-    transparent: boolean
-    show_frame: boolean
   }
   grid_cols: number
   grid_rows: number
@@ -26,57 +25,82 @@ interface KeyViewerConfig {
   }[]
 }
 
-import path from 'path'
-import * as fs from 'fs'
+// Set default values if the config doesn't exist or is corrupted
+const defaultConfig: KeyViewerConfig = {
+  window: {
+    width: 280,
+    height: 370
+  },
+  grid_cols: 4,
+  grid_rows: 1,
+  tile_spawn_area_height: 300,
+  padding_of_key: 20,
+  space_between_keys: 10,
+  accent_color: 'oklch(.667 .295 322.15)',
+  border_radius_of_key: 10,
+  keys_to_track: [
+    {
+      label: 'D',
+      key_name: 'D',
+      width: 60,
+      height: 50
+    },
+    {
+      label: 'F',
+      key_name: 'F',
+      width: 60,
+      height: 50
+    },
+    {
+      label: 'J',
+      key_name: 'J',
+      width: 60,
+      height: 50
+    },
+    {
+      label: 'K',
+      key_name: 'K',
+      width: 60,
+      height: 50
+    }
+  ]
+}
 
-const configPath = path.join('/Users/kgh/Desktop/config.json')
-
-function loadConfig(): KeyViewerConfig {
+function loadConfig(configPath: string | null): KeyViewerConfig {
   try {
+    if (!configPath) {
+      return defaultConfig
+    }
     return JSON.parse(fs.readFileSync(configPath, 'utf-8'))
   } catch (err) {
     console.log(err)
-    // Set default values if the config doesn't exist or is corrupted
-    const defaultConfig: KeyViewerConfig = {
-      window: {
-        width: 900,
-        height: 670,
-        transparent: false,
-        show_frame: false
-      },
-      grid_cols: 2,
-      grid_rows: 1,
-      tile_spawn_area_height: 300,
-      padding_of_key: 20,
-      space_between_keys: 10,
-      accent_color: 'oklch(.667 .295 322.15)',
-      border_radius_of_key: 10,
-      keys_to_track: [
-        {
-          label: 'F',
-          key_name: 'F',
-          width: 90,
-          height: 60
-        },
-        {
-          label: 'J',
-          key_name: 'J',
-          width: 90,
-          height: 60
-        }
-      ]
-    }
-    fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2))
     return defaultConfig
   }
 }
 
-const keyViewerConfig = loadConfig()
+let keyViewerConfig = loadConfig('')
 let pressedKeys: string[] = []
+let mainWindow: BrowserWindow
+
+function openConfig(): void {
+  dialog
+    .showOpenDialog(mainWindow, {
+      properties: ['openFile']
+    })
+    .then((result) => {
+      if (result.canceled) {
+        mainWindow.webContents.send('config-file-read', keyViewerConfig)
+        return
+      }
+      keyViewerConfig = loadConfig(result.filePaths[0])
+      mainWindow.setSize(keyViewerConfig.window.width, keyViewerConfig.window.height)
+      mainWindow.webContents.send('config-file-read', keyViewerConfig)
+    })
+}
 
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: keyViewerConfig.window.width,
     height: keyViewerConfig.window.height,
     show: false,
@@ -86,8 +110,8 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
     },
-    transparent: keyViewerConfig.window.transparent,
-    frame: keyViewerConfig.window.show_frame,
+    transparent: true,
+    frame: false,
     alwaysOnTop: true
   })
 
@@ -117,6 +141,7 @@ function createWindow(): void {
       const pressedKeysCopy = [...pressedKeys]
       pressedKeysCopy.push(e.name)
       pressedKeys = [...pressedKeysCopy]
+      // console.log(pressedKeys)
       mainWindow.webContents.send('global-key-pressed', pressedKeys)
     } else if (e.state === 'UP' && pressedKeys.includes(e.name)) {
       const pressedKeysCopy = [...pressedKeys]
@@ -127,6 +152,11 @@ function createWindow(): void {
       pressedKeys = [...pressedKeysCopy]
       mainWindow.webContents.send('global-key-pressed', pressedKeys)
     }
+  })
+
+  ipcMain.on('open-config-selction-dialog', () => {
+    // console.log(dialog.showOpenDialog({ properties: ['openFile'] }))
+    openConfig()
   })
 
   // HMR for renderer base on electron-vite cli.

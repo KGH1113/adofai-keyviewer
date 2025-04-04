@@ -1,3 +1,4 @@
+// CanvasRectangleSpawner.tsx
 import React, { useRef, useEffect } from 'react'
 
 interface Rectangle {
@@ -37,9 +38,18 @@ const CanvasRectangleSpawner: React.FC<CanvasRectangleSpawnerProps> = ({
     if (!context) return
 
     let animationFrameId: number
+    let lastFrameTime = 0
+    const frameDuration = 1000 / 60 // 16.67ms for 60fps
 
-    const render = (): void => {
-      // Check whether the trigger key (e.g., "O") was pressed previously and is pressed now.
+    const render = (timestamp: number): void => {
+      // Only update if enough time has passed for 60fps
+      if (timestamp - lastFrameTime < frameDuration) {
+        animationFrameId = requestAnimationFrame(render)
+        return
+      }
+      lastFrameTime = timestamp
+
+      // Check whether the trigger key was pressed previously and is pressed now.
       const wasPressed = prevPressedKeysRef.current.includes(triggerKey)
       const isPressed = pressedKeys.includes(triggerKey)
 
@@ -94,7 +104,7 @@ const CanvasRectangleSpawner: React.FC<CanvasRectangleSpawnerProps> = ({
       animationFrameId = requestAnimationFrame(render)
     }
 
-    render()
+    animationFrameId = requestAnimationFrame(render)
 
     return (): void => {
       cancelAnimationFrame(animationFrameId)
@@ -104,4 +114,28 @@ const CanvasRectangleSpawner: React.FC<CanvasRectangleSpawnerProps> = ({
   return <canvas ref={canvasRef} width={width} height={height} />
 }
 
-export default CanvasRectangleSpawner
+// Custom equality function to avoid unnecessary re-renders.
+function areEqual(
+  prevProps: CanvasRectangleSpawnerProps,
+  nextProps: CanvasRectangleSpawnerProps
+): boolean {
+  if (
+    prevProps.width !== nextProps.width ||
+    prevProps.height !== nextProps.height ||
+    prevProps.triggerKey !== nextProps.triggerKey
+  ) {
+    return false
+  }
+
+  const prevKeys = prevProps.pressedKeys
+  const nextKeys = nextProps.pressedKeys
+  if (prevKeys.length !== nextKeys.length) return false
+  for (let i = 0; i < prevKeys.length; i++) {
+    if (prevKeys[i] !== nextKeys[i]) {
+      return false
+    }
+  }
+  return true
+}
+
+export default React.memo(CanvasRectangleSpawner, areEqual)

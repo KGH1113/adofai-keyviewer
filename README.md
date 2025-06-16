@@ -1,34 +1,109 @@
-# adofai-keyviewer
+## Config.json 작성법
+⚠️ **이제 손으로 JSON을 편집하지 않아도 됩니다!**  
+웹 브라우저에서 값을 입력하고 바로 `config.json`을 내려받을 수 있는 **온라인 생성기**를 준비했습니다.  
 
-An Electron application with React and TypeScript
+🔗 https://adofai-keyviewer-config-json-builder.netlify.app/
 
-## Recommended IDE Setup
+---
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+## 📂 config.json이란?
 
-## Project Setup
+- 키뷰어가 **처음 켜질 때** 화면 크기·색상·추적할 키 등을 읽어오는 **설정 파일**입니다.  
+- 확장자는 `.json`이고, 반드시 **UTF-8**로 저장해야 합니다.  
+- JSON은 **“글자·숫자·참/거짓·목록·묶음”**만 사용합니다.  
+  - **주석(// …)** 은 허용되지 않습니다.
 
-### Install
+---
 
-```bash
-$ npm install
-```
+## ✏️ 작성 순서 (웹 생성기 사용)
 
-### Development
+1. 위 링크된 **웹 생성기** 페이지에 접속합니다.  
+2. 좌측 패널에서 창 크기·색상·추적할 키를 원하는 대로 설정합니다.  
+3. **[config.json 다운로드]** 버튼을 누르면 설정이 담긴 파일이 자동으로 저장됩니다.  
+4. 키뷰어를 실행하면 파일 탐색기가 열리고, config.json을 선택하면 설정이 적용됩니다.
 
-```bash
-$ npm run dev
-```
+---
 
-### Build
+## 🏗️ 각 항목 설명
+~~~json
+{
+  "window": {                     // 창 모양 관련
+    "width": 430,                 // 창 가로(px)
+    "height": 410,                // 창 세로(px)
+    "transparent": true,          // 배경 투명 여부  (true=투명, false=불투명)
+    "show_frame": true            // 윈도우 테두리 표시 (true=ON, false=숨김)
+  },
 
-```bash
-# For windows
-$ npm run build:win
+  "grid_cols": 8,                 // 한 줄에 보여줄 키 수
+  "grid_rows": 2,                 // 줄 수 (세로)
+  "tile_spawn_area_height": 250,  // 키가 애니메이션으로 나타나는 최대 높이(px)
+  "padding_of_key": 10,           // 키와 창 테두리 사이 여백(px)
+  "space_between_keys": 3,        // 키끼리 간격(px)
 
-# For macOS
-$ npm run build:mac
+  "accent_color": "rgb(104, 212, 252)",  // 눌렀을 때 번쩍이는 색 (CSS rgb 형식)
+  "accent_color_rgb": {                   // 같은 값을 r·g·b로 쪼갠 것, 고급 사용용
+    "r": 104,
+    "g": 212,
+    "b": 252
+  },
 
-# For Linux
-$ npm run build:linux
-```
+  "border_radius_of_key": 9,      // 키 모서리 둥근 정도(px)
+
+  "keys_to_track": [              // 추적할 키 목록
+    {
+      "label": "⇥",              // 화면에 표시될 글자
+      "key_name": "TAB",         // 실제 키 이름 (아래 표 참고)
+      "width": 50,               // 키 가로(px)
+      "height": 50               // 키 세로(px)
+    }
+    // … 더 추가 가능 …
+  ],
+
+  "press_record": [               // **자동 생성**: 키 누른 횟수 기록
+    // 프로그램이 알아서 채움
+  ]
+}
+~~~
+
+### key_name(실제 키 이름) 예시  
+
+| 자판 글자 | key_name 값 | 자판 글자 | key_name 값 |
+|-----------|-------------|-----------|-------------|
+| A         | `"A"`       | P         | `"P"`       |
+| 1         | `"1"`       | =         | `"EQUALS"`  |
+| Space     | `"SPACE"`   | Tab       | `"TAB"`     |
+| Enter     | `"RETURN"`  | Backspace | `"BACKSPACE"` |
+| Left Shift | `"LEFT SHIFT"` | \\ | `"BACKSLASH"` |
+
+> **새 키 추가 방법**  
+> 1. `keys_to_track` 배열의 마지막 `}` 뒤에 쉼표 `,`를 넣습니다.  
+> 2. 위 형식 그대로 새 블록을 복사-붙여넣기 후 `label`, `key_name`, `width`, `height`만 바꿉니다.  
+> 3. 배열 마지막 항목 뒤에는 쉼표를 **넣지 마세요**.
+
+---
+
+## 🖌️ 색상 바꾸기 꿀팁
+
+- `"accent_color"`에 원하는 색을 CSS `rgb(R,G,B)` 형식이나 `"#RRGGBB"` 형식으로 입력.  
+- `"accent_color_rgb"`는 프로그램 내부에서 쓰므로 함께 맞춰 주면 가장 정확합니다.  
+  - 예) 파란색 `#3498db` →  
+    ~~~json
+    "accent_color": "#3498db",
+    "accent_color_rgb": { "r": 52, "g": 152, "b": 219 }
+    ~~~
+
+---
+
+## ❓ 자주 묻는 질문
+
+| 질문 | 해결 방법 |
+|------|-----------|
+| **창이 안 보이거나 너무 작아요** | `"width"`·`"height"` 값을 키워 보세요. |
+| **배경이 까만데 투명이 안 돼요** | `"transparent": true`인지 확인 후 OS 투명 효과 지원 여부를 확인하세요. Mac OS와 Windows 10(1903 이상)에서 정상 동작합니다. |
+| **키를 눌러도 안 떠요** | `"key_name"`이 실제 키 이름과 정확히 일치하는지 확인하세요(대문자·띄어쓰기 모두 동일). |
+| **config.json 수정했는데 적용이 안 돼요** | 수정 후 **저장**했는지, 프로그램을 **재시작**했는지 확인하세요. |
+
+---
+
+### 끝!  
+이제 원하는 대로 색·크기·키를 바꿔서 나만의 ADOFAI 키뷰어를 즐겨보세요 🙂

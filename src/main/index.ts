@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -15,6 +15,11 @@ interface KeyViewerConfig {
   tile_spawn_area_height: number
   padding_of_key: number
   space_between_keys: number
+  accent_color_rgb: {
+    r: number
+    g: number
+    b: number
+  }
   accent_color: string
   border_radius_of_key: number
   keys_to_track: {
@@ -23,50 +28,50 @@ interface KeyViewerConfig {
     width: number
     height: number
   }[]
+  press_record: PressRecord[]
+}
+
+interface PressRecord {
+  key_name: string
+  cnt: number
 }
 
 // Set default values if the config doesn't exist or is corrupted
 const defaultConfig: KeyViewerConfig = {
   window: {
-    width: 280,
-    height: 370
+    width: 900,
+    height: 670
   },
-  grid_cols: 4,
+  grid_cols: 2,
   grid_rows: 1,
   tile_spawn_area_height: 300,
   padding_of_key: 20,
   space_between_keys: 10,
-  accent_color: 'oklch(.667 .295 322.15)',
+  accent_color_rgb: {
+    r: 104,
+    g: 212,
+    b: 252
+  },
+  accent_color: 'rgb(104, 212, 252)',
   border_radius_of_key: 10,
   keys_to_track: [
     {
-      label: 'D',
-      key_name: 'D',
-      width: 60,
-      height: 50
-    },
-    {
       label: 'F',
       key_name: 'F',
-      width: 60,
-      height: 50
+      width: 90,
+      height: 60
     },
     {
       label: 'J',
       key_name: 'J',
-      width: 60,
-      height: 50
-    },
-    {
-      label: 'K',
-      key_name: 'K',
-      width: 60,
-      height: 50
+      width: 90,
+      height: 60
     }
-  ]
+  ],
+  press_record: []
 }
 
-function loadConfig(configPath: string | null): KeyViewerConfig {
+function loadConfig(configPath: string): KeyViewerConfig {
   try {
     if (!configPath) {
       return defaultConfig
@@ -78,24 +83,107 @@ function loadConfig(configPath: string | null): KeyViewerConfig {
   }
 }
 
-let keyViewerConfig = loadConfig('')
+let keyViewerConfig = defaultConfig
+let configJsonPath: string = ''
 let pressedKeys: string[] = []
 let mainWindow: BrowserWindow
+let ignoreMouseEvents = false
+
+// Factory that creates a listener and hooks platform‑specific error callbacks
+function createKeyboardListener(): GlobalKeyboardListener {
+  return new GlobalKeyboardListener({
+    windows: { onError: restartKeyListener },
+    mac: { onError: restartKeyListener },
+    x11: { onError: restartKeyListener }
+  })
+}
+
+let gkl: GlobalKeyboardListener = createKeyboardListener()
+
+const newPresses: PressRecord[] = []
+
+function savePressRecordFile(presses): void {
+  const newContent = { ...keyViewerConfig }
+  newContent['press_record'] = presses
+  fs.writeFile(configJsonPath, JSON.stringify(newContent, null, 2), () => {})
+}
+
+async function readPressRecordFile(): Promise<PressRecord[]> {
+  const readData = await JSON.parse(fs.readFileSync(configJsonPath, 'utf-8'))['press_record']
+  const arr = keyViewerConfig.keys_to_track.map((configKey) => configKey.key_name)
+  const onlyKeysToTrack = readData.filter((key) => arr.includes(key.key_name))
+  return onlyKeysToTrack
+}
 
 function openConfig(): void {
   dialog
     .showOpenDialog(mainWindow, {
       properties: ['openFile']
     })
-    .then((result) => {
+    .then(async (result) => {
       if (result.canceled) {
         mainWindow.webContents.send('config-file-read', keyViewerConfig)
         return
       }
-      keyViewerConfig = loadConfig(result.filePaths[0])
+      configJsonPath = result.filePaths[0]
+      keyViewerConfig = loadConfig(configJsonPath)
       mainWindow.setSize(keyViewerConfig.window.width, keyViewerConfig.window.height)
-      mainWindow.webContents.send('config-file-read', keyViewerConfig)
+      mainWindow.webContents.send('config-file-read', {
+        config: keyViewerConfig,
+        pressRecords: await readPressRecordFile()
+      })
     })
+}
+
+// Listen for key events. The callback receives an event object and a boolean indicating key down/up.
+const handleKeyPress = (e): void => {
+  if (!e.name) {
+    return
+  }
+  if (e.state === 'DOWN' && !pressedKeys.includes(e.name)) {
+    if (!keyViewerConfig.keys_to_track.map((key) => key.key_name).includes(e.name)) {
+      return
+    }
+    pressedKeys = [...pressedKeys, e.name]
+    let passed = false
+    for (const press of newPresses) {
+      if (press.key_name === e.name) {
+        press.cnt += 1
+        passed = true
+      }
+    }
+    if (!passed) {
+      newPresses.push({
+        key_name: e.name,
+        cnt: 1
+      })
+    }
+    // console.log(e.name)
+    mainWindow.webContents.send('global-key-pressed', pressedKeys)
+    mainWindow.webContents.send(
+      'total-count-changed',
+      newPresses.reduce((sum, item) => sum + item.cnt, 0)
+    )
+  } else if (e.state === 'UP' && pressedKeys.includes(e.name)) {
+    pressedKeys = pressedKeys.filter((key) => key !== e.name)
+    mainWindow.webContents.send('global-key-pressed', pressedKeys)
+  }
+}
+// Re‑initialises the native key server when it crashes.
+function restartKeyListener(): void {
+  try {
+    // Detach the old handler to avoid leaks / duplicates
+    gkl.removeListener(handleKeyPress)
+  } catch {
+    /* ignored: the listener might already be gone */
+  }
+
+  gkl = createKeyboardListener()
+  gkl.addListener(handleKeyPress)
+}
+/** Attaches the key‑press callback once to the current listener. */
+function attachKeyListener(): void {
+  gkl.addListener(handleKeyPress)
 }
 
 function createWindow(): void {
@@ -120,7 +208,6 @@ function createWindow(): void {
   mainWindow.setFullScreenable(false)
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.webContents.send('config-file-read', keyViewerConfig)
     mainWindow.show()
   })
 
@@ -129,30 +216,17 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // Initialize the global keyboard listener
-  const gkl = new GlobalKeyboardListener()
-
-  // Listen for key events. The callback receives an event object and a boolean indicating key down/up.
-  gkl.addListener((e) => {
-    if (!e.name) {
-      return
-    }
-    if (e.state === 'DOWN' && !pressedKeys.includes(e.name)) {
-      const pressedKeysCopy = [...pressedKeys]
-      pressedKeysCopy.push(e.name)
-      pressedKeys = [...pressedKeysCopy]
-      // console.log(pressedKeys)
-      mainWindow.webContents.send('global-key-pressed', pressedKeys)
-    } else if (e.state === 'UP' && pressedKeys.includes(e.name)) {
-      const pressedKeysCopy = [...pressedKeys]
-      const idx = pressedKeysCopy.indexOf(e.name)
-      if (idx > -1) {
-        pressedKeysCopy.splice(idx, 1)
-      }
-      pressedKeys = [...pressedKeysCopy]
-      mainWindow.webContents.send('global-key-pressed', pressedKeys)
+  globalShortcut.register('Alt+Space', () => {
+    if (ignoreMouseEvents) {
+      mainWindow.setIgnoreMouseEvents(false, { forward: false })
+      ignoreMouseEvents = false
+    } else {
+      mainWindow.setIgnoreMouseEvents(true, { forward: true })
+      ignoreMouseEvents = true
     }
   })
+
+  attachKeyListener()
 
   ipcMain.on('open-config-selction-dialog', () => {
     // console.log(dialog.showOpenDialog({ properties: ['openFile'] }))
@@ -202,10 +276,16 @@ app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+app.on('window-all-closed', async () => {
+  const record = await readPressRecordFile()
+  const map = new Map()
+  const arr = [...record, ...newPresses]
+  arr.forEach(({ key_name, cnt }) => {
+    map.set(key_name, (map.get(key_name) || 0) + cnt)
+  })
+  const sum = Array.from(map, ([key_name, cnt]) => ({ key_name, cnt }))
+  savePressRecordFile(sum)
+  app.quit()
 })
 
 // In this file you can include the rest of your app's specific main process

@@ -83,12 +83,12 @@ const CanvasRectangleSpawner: React.FC<CanvasRectangleSpawnerProps> = ({
       rectanglesRef.current = rectanglesRef.current.filter((rect) => {
         if (rect.isGrowing) {
           // Increase the rectangle’s height while the key is held down.
-          rect.height += 3
+          rect.height += 5
           // Adjust y so that the rectangle appears to grow upward from the bottom.
           rect.y = canvas.height - rect.height
         } else {
           // Once released, move the rectangle upward.
-          rect.y -= 3
+          rect.y -= 5
         }
 
         // Draw the rectangle if it is still visible.

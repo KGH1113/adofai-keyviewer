@@ -5,9 +5,15 @@ interface Props {
   pressed: boolean
   padding: number
   accentColor: string
+  accentColorRGB: {
+    r: number
+    g: number
+    b: number
+  }
   borderRadius: number
   width: number
   height: number
+  startPressCnt: number
 }
 
 const Key = React.memo(function Key({
@@ -15,28 +21,54 @@ const Key = React.memo(function Key({
   pressed,
   padding,
   accentColor,
+  accentColorRGB,
   borderRadius,
   width,
-  height
+  height,
+  startPressCnt
 }: Props): JSX.Element {
+  const [cnt, setCnt] = React.useState<number>(0)
+  React.useEffect(() => {
+    if (pressed) {
+      setCnt((prev) => prev + 1)
+    }
+  }, [pressed])
+
   return (
     <div
       style={{
         padding,
-        color: accentColor,
+        color: pressed ? '#000' : '#fff',
         border: `2px solid ${pressed ? '#fff' : accentColor}`,
-        background: pressed ? '#fff' : 'transparent',
+        background: pressed
+          ? '#fff'
+          : `rgba(${accentColorRGB.r}, ${accentColorRGB.g}, ${accentColorRGB.b}, 0.1)`,
         borderRadius,
         width,
         height,
-        fontSize: '1.3rem',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontWeight: 'bold'
+        gap: 1
       }}
     >
-      {name}
+      <p
+        style={{
+          fontSize: '1.3rem',
+          fontWeight: 'bold'
+        }}
+      >
+        {name}
+      </p>
+      <p
+        style={{
+          fontSize: '0.6rem',
+          fontWeight: 'normal'
+        }}
+      >
+        {startPressCnt + cnt}
+      </p>
     </div>
   )
 })

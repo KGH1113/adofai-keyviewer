@@ -12,7 +12,7 @@ Unity Mod Manager이 구동되지 않는 플랫폼에서도 구동되는 얼불�
 - 애플리케이션은 창 모드, 오버레이 모드 두 가지의 모드가 존재합니다.
 - 창 모드는 키뷰어 창을 선택 할 수 있어서 키뷰어 창을 움직이거나, 창을 선택 후 얼불춤을 연습할 수 있습니다.
 - 오버레이 모드는 창 선택이 불가능하고, 클릭이 통과됩니다.
-- Windows나 Linux에서는 ALT + Space, Mac에서는 Option + Space로 토글이 가능합니다.
+- config.json에서 설정한 단축키로 토글이 가능합니다.
 
 # Config.json 작성법
 ⚠️ **이제 손으로 JSON을 편집하지 않아도 됩니다!**  
@@ -47,6 +47,7 @@ Unity Mod Manager이 구동되지 않는 플랫폼에서도 구동되는 얼불�
     "transparent": true,          // 배경 투명 여부  (true=투명, false=불투명)
     "show_frame": true            // 윈도우 테두리 표시 (true=ON, false=숨김)
   },
+  "window_mode_toggle_shortcut": "Alt+Space", // 창/오버레이 모드 토글 단축키
 
   "grid_cols": 8,                 // 한 줄에 보여줄 키 수
   "grid_rows": 2,                 // 줄 수 (세로)

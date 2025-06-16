@@ -10,6 +10,7 @@ interface KeyViewerConfig {
     width: number
     height: number
   }
+  window_mode_toggle_shortcut: string
   grid_cols: number
   grid_rows: number
   tile_spawn_area_height: number
@@ -42,6 +43,7 @@ const defaultConfig: KeyViewerConfig = {
     width: 900,
     height: 670
   },
+  window_mode_toggle_shortcut: 'Alt+Space',
   grid_cols: 2,
   grid_rows: 1,
   tile_spawn_area_height: 300,
@@ -76,7 +78,8 @@ function loadConfig(configPath: string): KeyViewerConfig {
     if (!configPath) {
       return defaultConfig
     }
-    return JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+    const result = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+    return result
   } catch (err) {
     console.log(err)
     return defaultConfig
@@ -127,6 +130,15 @@ function openConfig(): void {
       }
       configJsonPath = result.filePaths[0]
       keyViewerConfig = loadConfig(configJsonPath)
+      globalShortcut.register(keyViewerConfig.window_mode_toggle_shortcut, () => {
+        if (ignoreMouseEvents) {
+          mainWindow.setIgnoreMouseEvents(false, { forward: false })
+          ignoreMouseEvents = false
+        } else {
+          mainWindow.setIgnoreMouseEvents(true, { forward: true })
+          ignoreMouseEvents = true
+        }
+      })
       mainWindow.setSize(keyViewerConfig.window.width, keyViewerConfig.window.height)
       mainWindow.webContents.send('config-file-read', {
         config: keyViewerConfig,
@@ -214,16 +226,6 @@ function createWindow(): void {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
-  })
-
-  globalShortcut.register('Alt+Space', () => {
-    if (ignoreMouseEvents) {
-      mainWindow.setIgnoreMouseEvents(false, { forward: false })
-      ignoreMouseEvents = false
-    } else {
-      mainWindow.setIgnoreMouseEvents(true, { forward: true })
-      ignoreMouseEvents = true
-    }
   })
 
   attachKeyListener()

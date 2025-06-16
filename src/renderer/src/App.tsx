@@ -7,6 +7,7 @@ interface KeyViewerConfig {
     width: number
     height: number
   }
+  window_mode_toggle_shortcut: string
   grid_cols: number
   grid_rows: number
   tile_spawn_area_height: number
@@ -66,6 +67,7 @@ function App(): JSX.Element {
       width: 900,
       height: 670
     },
+    window_mode_toggle_shortcut: 'Alt+Space',
     grid_cols: 2,
     grid_rows: 1,
     tile_spawn_area_height: 300,

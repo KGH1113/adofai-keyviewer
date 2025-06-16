@@ -1,10 +1,24 @@
-## Config.json 작성법
+# adofai-keyviewer
+
+## 설명
+Unity Mod Manager이 구동되지 않는 플랫폼에서도 구동되는 얼불춤 키뷰어 입니다. 얼불춤 모드가 아니고 외부 프로그램입니다.
+
+## 실행하는 방법
+1. releases에서 자신의 플랫폼에 맞는 파일을 다운로드합니다.
+2. config.json 파일을 작성합니다. 작성법은 아래에 정리되어있습니다.
+3. 애플리케이션을 실행 후, 작성한 config.json 파일을 선택합니다.
+
+## 사용법
+- 애플리케이션은 창 모드, 오버레이 모드 두 가지의 모드가 존재합니다.
+- 창 모드는 키뷰어 창을 선택 할 수 있어서 키뷰어 창을 움직이거나, 창을 선택 후 얼불춤을 연습할 수 있습니다.
+- 오버레이 모드는 창 선택이 불가능하고, 클릭이 통과됩니다.
+- Windows나 Linux에서는 ALT + Space, Mac에서는 Option + Space로 토글이 가능합니다.
+
+# Config.json 작성법
 ⚠️ **이제 손으로 JSON을 편집하지 않아도 됩니다!**  
 웹 브라우저에서 값을 입력하고 바로 `config.json`을 내려받을 수 있는 **온라인 생성기**를 준비했습니다.  
 
 🔗 https://adofai-keyviewer-config-json-builder.netlify.app/
-
----
 
 ## 📂 config.json이란?
 
